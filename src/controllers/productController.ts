@@ -7,7 +7,9 @@ export const getProducts = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  console.log('------entro a productos antes del try');
   try {
+    console.log('------entro a productos despues del try');
     // Verificar si los datos están en el caché
     const cachedProducts = await redisClient.get('products');
 
