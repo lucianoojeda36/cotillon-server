@@ -11,13 +11,13 @@ export const getProducts = async (
   try {
     console.log('------entro a productos despues del try');
     // Verificar si los datos están en el caché
-    const cachedProducts = await redisClient.get('products');
+    // const cachedProducts = await redisClient.get('products');
 
-    if (cachedProducts) {
-      console.log('Productos obtenidos desde Redis');
-      res.json(JSON.parse(cachedProducts));
-      return;
-    }
+    // if (cachedProducts) {
+    //   console.log('Productos obtenidos desde Redis');
+    //   res.json(JSON.parse(cachedProducts));
+    //   return;
+    // }
 
     // Si no están en el caché, consultar la base de datos
     const result = await pool.query('SELECT * FROM products;');
@@ -25,7 +25,7 @@ export const getProducts = async (
     console.log('------result---------', result);
 
     // Guardar los resultados en Redis (expiración en 1 hora)
-    await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
+    // await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
 
     console.log('Productos obtenidos desde la base de datos');
     res.json(result.rows);
