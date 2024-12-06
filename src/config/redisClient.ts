@@ -13,10 +13,6 @@ if (!CACHE_HOST || !CACHE_PORT) {
 
 const port = parseInt(CACHE_PORT, 10);
 
-console.log('-------------s', port);
-
-console.log('---------sss----s', CACHE_HOST);
-
 const redisClient = new Redis({
   host: CACHE_HOST, // Dirección del servidor Redis
   port: port, // Puerto (por defecto: 6379)
