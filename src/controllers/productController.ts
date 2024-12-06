@@ -22,6 +22,8 @@ export const getProducts = async (
     // Si no están en el caché, consultar la base de datos
     const result = await pool.query('SELECT * FROM products;');
 
+    console.log('------result---------', result);
+
     // Guardar los resultados en Redis (expiración en 1 hora)
     await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
 
