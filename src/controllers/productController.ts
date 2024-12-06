@@ -18,7 +18,7 @@ export const getProducts = async (
     }
 
     // Si no están en el caché, consultar la base de datos
-    const result = await pool.query('SELECT * FROM products');
+    const result = await pool.query('SELECT * FROM products;');
 
     // Guardar los resultados en Redis (expiración en 1 hora)
     await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
@@ -40,7 +40,7 @@ export const createProduct = async (
     const { name, price, description, category } = req.body;
 
     const result = await pool.query(
-      'INSERT INTO products (name, price, description, category) VALUES ($1, $2, $3, $4) RETURNING *',
+      'INSERT INTO products (name, price, description, category) VALUES ($1, $2, $3, $4) RETURNING *;',
       [name, price, description, category],
     );
 
@@ -64,7 +64,7 @@ export const updateProduct = async (
 
     // Verificar si el producto existe
     const productResult = await pool.query(
-      'SELECT * FROM products WHERE product_id = $1',
+      'SELECT * FROM products WHERE product_id = $1;',
       [product_id],
     );
 
@@ -75,7 +75,7 @@ export const updateProduct = async (
 
     // Actualizar el producto
     const result = await pool.query(
-      'UPDATE products SET name = $1, price = $2, description = $3, category = $4 WHERE product_id = $5 RETURNING *',
+      'UPDATE products SET name = $1, price = $2, description = $3, category = $4 WHERE product_id = $5 RETURNING *;',
       [name, price, description, category, product_id],
     );
 
@@ -98,7 +98,7 @@ export const deleteProduct = async (
 
     // Verificar si el producto existe
     const productResult = await pool.query(
-      'SELECT * FROM products WHERE product_id = $1',
+      'SELECT * FROM products WHERE product_id = $1;',
       [product_id],
     );
 
@@ -108,7 +108,7 @@ export const deleteProduct = async (
     }
 
     // Eliminar el producto
-    await pool.query('DELETE FROM products WHERE product_id = $1', [
+    await pool.query('DELETE FROM products WHERE product_id = $1;', [
       product_id,
     ]);
 
@@ -130,7 +130,7 @@ export const getProductById = async (
     const { product_id } = req.params;
 
     const result = await pool.query(
-      'SELECT * FROM products WHERE product_id = $1',
+      'SELECT * FROM products WHERE product_id = $1;',
       [product_id],
     );
 
