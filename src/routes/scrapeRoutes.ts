@@ -11,4 +11,12 @@ router.get('/scrape', async (req: Request, res: Response) => {
   }
 });
 
+router.get('/pepe', (req: Request, res: Response) => {
+  try {
+    res.status(200).send('entro a ppee');
+  } catch (error) {
+    res.status(500).json({ error: 'Scraping failed' });
+  }
+});
+
 export default router;
