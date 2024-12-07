@@ -1,31 +1,31 @@
 import { Request, Response } from 'express';
 import pool from '../config/database'; // Configuración de PostgreSQL
-import redisClient from '../config/redisClient'; // Cliente Redis
+// import redisClient from '../config/redisClient'; // Cliente Redis
 
 // Obtener productos con caché Redis
 export const getProducts = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  console.log('------entro a productos antes del try');
+  // console.log('------entro a productos antes del try');
   try {
-    console.log('------entro a productos despues del try');
-    // Verificar si los datos están en el caché
-    const cachedProducts = await redisClient.get('products');
+    // console.log('------entro a productos despues del try');
+    // // Verificar si los datos están en el caché
+    // const cachedProducts = await redisClient.get('products');
 
-    if (cachedProducts) {
-      console.log('Productos obtenidos desde Redis');
-      res.json(JSON.parse(cachedProducts));
-      return;
-    }
+    // if (cachedProducts) {
+    //   console.log('Productos obtenidos desde Redis');
+    //   res.json(JSON.parse(cachedProducts));
+    //   return;
+    // }
 
     // Si no están en el caché, consultar la base de datos
     const result = await pool.query('SELECT * FROM products;');
 
-    console.log('------result---------', result);
+    // console.log('------result---------', result);
 
     // Guardar los resultados en Redis (expiración en 1 hora)
-    await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
+    // await redisClient.set('products', JSON.stringify(result.rows), 'EX', 3600);
 
     console.log('Productos obtenidos desde la base de datos');
     res.json(result.rows);
@@ -49,7 +49,7 @@ export const createProduct = async (
     );
 
     // Invalida la caché al agregar un producto
-    await redisClient.del('products');
+    // await redisClient.del('products');
 
     console.log('Producto creado y caché invalidada');
     res.status(201).json(result.rows[0]);
@@ -84,7 +84,7 @@ export const updateProduct = async (
     );
 
     // Invalida la caché al actualizar un producto
-    await redisClient.del('products');
+    // await redisClient.del('products');
 
     console.log('Producto actualizado y caché invalidada');
     res.status(200).json(result.rows[0]);
@@ -117,7 +117,7 @@ export const deleteProduct = async (
     ]);
 
     // Invalida la caché al eliminar un producto
-    await redisClient.del('products');
+    // await redisClient.del('products');
 
     console.log('Producto eliminado y caché invalidada');
     res.status(200).json({ message: 'Producto eliminado exitosamente' });
