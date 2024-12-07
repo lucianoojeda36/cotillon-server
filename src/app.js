@@ -1,0 +1,21 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const usersRoutes_1 = __importDefault(require("./routes/usersRoutes"));
+const scrapeRoutes_1 = __importDefault(require("./routes/scrapeRoutes"));
+const productsRoutes_1 = __importDefault(require("./routes/productsRoutes"));
+const cartRoutes_1 = __importDefault(require("./routes/cartRoutes"));
+const orderRoutes_1 = __importDefault(require("./routes/orderRoutes"));
+const cors_1 = __importDefault(require("cors"));
+const app = (0, express_1.default)();
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.use('/api', scrapeRoutes_1.default);
+app.use('/api/users', usersRoutes_1.default);
+app.use('/api/products', productsRoutes_1.default);
+app.use('/api/cart', cartRoutes_1.default);
+app.use('/api/order', orderRoutes_1.default);
+exports.default = app;
