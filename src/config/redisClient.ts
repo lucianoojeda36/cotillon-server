@@ -14,10 +14,8 @@ if (!CACHE_HOST || !CACHE_PORT) {
 const port = parseInt(CACHE_PORT, 10);
 
 const redisClient = new Redis({
-  host: CACHE_HOST, // Dirección del servidor Redis
-  port: port, // Puerto (por defecto: 6379)
-  // Puedes agregar autenticación si la configuración lo requiere:
-  // password: 'your_redis_password',
+  host: CACHE_HOST,
+  port: port,
 });
 
 redisClient.on('connect', () => {
