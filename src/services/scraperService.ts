@@ -1,9 +1,13 @@
-import puppeteer from 'puppeteer';
 import pool from '../config/database';
+import { Browser, Page } from 'puppeteer';
 
-const scrapeData = async (url: string, username: string, password: string) => {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
+const scrapeData = async (
+  url: string,
+  username: string,
+  password: string,
+  browser: Browser,
+) => {
+  const page: Page = await browser.newPage();
   try {
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto(url, { waitUntil: 'domcontentloaded' });
@@ -80,11 +84,12 @@ const scrapeData = async (url: string, username: string, password: string) => {
       );
     }
 
-    return { products, browser }; // Devuelve los datos y el navegador
+    return products;
   } catch (error) {
     console.error('Error durante el scraping:', error);
-    await browser.close(); // Asegúrate de cerrar el navegador si ocurre un error
-    throw error; // Lanza el error para manejarlo en otro nivel
+    throw error;
+  } finally {
+    await page.close(); // Ensure page is closed
   }
 };
 

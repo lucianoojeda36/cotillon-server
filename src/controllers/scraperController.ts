@@ -1,29 +1,43 @@
 import { Request, Response } from 'express';
+import puppeteer from 'puppeteer';
 import scrapeData from '../services/scraperService';
 
 async function scrape(req: Request, res: Response): Promise<Response> {
   const { url, username, password } = req.query;
 
-  // Validación de la URL obligatoria
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
   }
 
-  let browser: any; // Variable para el navegador
-
   try {
-    // Llamada al servicio de scraping
-    const scrapeResult = await scrapeData(
-      url as string,
-      username as string,
-      password as string,
-    );
+    // Launch browser here instead of in the service
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--remote-debugging-port=9222',
+        '--disable-dev-shm-usage',
+        '--no-first-run',
+        '--headless',
+      ],
+      executablePath: '/usr/bin/google-chrome',
+    });
 
-    browser = scrapeResult.browser; // Guardamos la instancia del navegador
-    const { products } = scrapeResult;
+    try {
+      const products = await scrapeData(
+        url as string,
+        username as string,
+        password as string,
+        browser, // Pass browser instance
+      );
 
-    // Enviamos la respuesta con los productos raspados
-    return res.json(products);
+      return res.json(products);
+    } finally {
+      // Always close the browser
+      await browser.close();
+    }
   } catch (error: unknown) {
     console.error('Error during scraping:', error);
 
@@ -33,11 +47,6 @@ async function scrape(req: Request, res: Response): Promise<Response> {
         .json({ error: 'Error scraping the page', details: error.message });
     } else {
       return res.status(500).json({ error: 'Unknown error occurred' });
-    }
-  } finally {
-    // Aseguramos que el navegador se cierra en cualquier caso
-    if (browser) {
-      await browser.close();
     }
   }
 }
