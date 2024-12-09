@@ -1,8 +1,8 @@
 import puppeteer from 'puppeteer';
-import pool from '../config/database'; // Configuración de base de datos
+import pool from '../config/database';
 
 const scrapeData = async (url: string, username: string, password: string) => {
-  const browser = await puppeteer.launch({ headless: false, slowMo: 50 });
+  const browser = await puppeteer.launch({ headless: true });
   const page = await browser.newPage();
   try {
     await page.setViewport({ width: 1280, height: 800 });
