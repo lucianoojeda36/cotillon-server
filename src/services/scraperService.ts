@@ -1,6 +1,28 @@
 import pool from '../config/database';
 import { Browser, Page } from 'puppeteer';
 
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const waitForSelectorWithRetry = async (
+  page: Page,
+  selector: string,
+  options: { visible?: boolean; timeout?: number },
+  retries: number = 3,
+) => {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      await page.waitForSelector(selector, options);
+      return; // Éxito, salir del bucle
+    } catch (err) {
+      if (attempt === retries) throw err; // Lanza el error si falla tras los reintentos
+      console.log(
+        `Reintento ${attempt}/${retries} para el selector ${selector}`,
+      );
+      await delay(2000); // Pausa antes de reintentar
+    }
+  }
+};
+
 const scrapeData = async (
   url: string,
   username: string,
@@ -21,7 +43,10 @@ const scrapeData = async (
     const searchTerm = '';
     await page.type('#buscar_txt', searchTerm);
     await page.click('#buscar_menu button[type="submit"]');
-    await page.waitForSelector('.producto_contenedor', { visible: true });
+    await waitForSelectorWithRetry(page, '.producto_contenedor', {
+      visible: true,
+      timeout: 60000, // Tiempo de espera aumentado
+    });
 
     let pageNumber = 1;
     let products: Array<any> = [];
@@ -57,6 +82,7 @@ const scrapeData = async (
 
       products = [...products, ...newProducts];
 
+      // Validar si hay más páginas
       const nextPageLink = await page.$(
         `a.ir-pagina[href="javascript:lista_paginar_ir_pagina('${
           pageNumber + 1
@@ -69,7 +95,10 @@ const scrapeData = async (
       }
 
       await nextPageLink.click();
-      await page.waitForSelector('.producto_contenedor', { visible: true });
+      await waitForSelectorWithRetry(page, '.producto_contenedor', {
+        visible: true,
+        timeout: 30000,
+      });
       pageNumber++;
     }
 
@@ -89,7 +118,7 @@ const scrapeData = async (
     console.error('Error durante el scraping:', error);
     throw error;
   } finally {
-    await page.close(); // Ensure page is closed
+    await page.close(); // Asegura que la página se cierre
   }
 };
 

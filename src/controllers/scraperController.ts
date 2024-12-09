@@ -14,13 +14,11 @@ async function scrape(req: Request, res: Response): Promise<Response> {
     const browser = await puppeteer.launch({
       headless: true,
       args: [
-        '--headless',
         '--no-sandbox',
         '--disable-setuid-sandbox',
-        '--disable-gpu',
-        '--disable-software-rasterizer',
-        '--remote-debugging-port=9222',
         '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
       ],
       executablePath: '/usr/bin/google-chrome',
       defaultViewport: { width: 1920, height: 1080 },
