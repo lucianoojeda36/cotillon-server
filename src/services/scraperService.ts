@@ -45,7 +45,7 @@ const scrapeData = async (
     await page.click('#buscar_menu button[type="submit"]');
     await waitForSelectorWithRetry(page, '.producto_contenedor', {
       visible: true,
-      timeout: 60000, // Tiempo de espera aumentado
+      timeout: 60000,
     });
 
     let pageNumber = 1;
@@ -97,7 +97,7 @@ const scrapeData = async (
       await nextPageLink.click();
       await waitForSelectorWithRetry(page, '.producto_contenedor', {
         visible: true,
-        timeout: 30000,
+        timeout: 60000,
       });
       pageNumber++;
     }
