@@ -2,8 +2,9 @@ module.exports = {
   apps: [
     {
       name: 'comercio-server', // Nombre de la aplicación que aparecerá en PM2
-      script: 'xvfb-run', // Usamos xvfb-run como el script que PM2 ejecutará
-      args: '-a node ./dist/server.js', // El comando que se ejecutará (reemplaza con la ruta a tu archivo .js compilado)
+      script: 'node', // Usa node como el script para ejecutar
+      args: './dist/server.js', // El archivo JS compilado que ejecutará Node
+      interpreter: 'xvfb-run', // Especifica xvfb-run como el intérprete para la ejecución
       cwd: './', // Directorio de trabajo de tu proyecto (asegúrate de que este sea correcto)
       watch: false, // Puedes desactivar el watch en producción si no es necesario
       env: {
