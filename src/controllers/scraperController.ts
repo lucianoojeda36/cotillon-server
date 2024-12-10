@@ -10,14 +10,12 @@ function getExecutablePath(): string {
   const platform = os.platform();
 
   if (platform === 'darwin') {
-    // macOS
     const macPath =
       '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
     if (existsSync(macPath)) {
       return macPath;
     }
   } else if (platform === 'linux') {
-    // Linux
     const linuxPaths = ['/usr/bin/google-chrome', '/usr/bin/chromium'];
     for (const path of linuxPaths) {
       if (existsSync(path)) {
@@ -25,7 +23,6 @@ function getExecutablePath(): string {
       }
     }
   } else if (platform === 'win32') {
-    // Windows
     const winPaths = [
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
@@ -43,12 +40,12 @@ function getExecutablePath(): string {
 async function initializeCluster() {
   if (!cluster) {
     const executablePath = getExecutablePath();
-    const cpuCount = os.cpus().length; // Detectar núcleos de CPU disponibles
-    const maxConcurrency = Math.min(cpuCount, 5); // Ajuste dinámico de concurrencia
+    const cpuCount = os.cpus().length;
+    const maxConcurrency = Math.min(cpuCount, 5);
 
     cluster = await Cluster.launch({
-      concurrency: Cluster.CONCURRENCY_PAGE, // Usa páginas en lugar de navegadores completos
-      maxConcurrency, // Número máximo de páginas concurrentes
+      concurrency: Cluster.CONCURRENCY_PAGE,
+      maxConcurrency,
       puppeteerOptions: {
         headless: true,
         args: [
@@ -63,7 +60,7 @@ async function initializeCluster() {
         ],
         executablePath,
       },
-      timeout: 60000, // Tiempo máximo por tarea
+      timeout: 60000, // Aumentar el tiempo de espera a 1 minuto
     });
 
     cluster.on('taskerror', (err: unknown, data: unknown) => {
@@ -73,6 +70,32 @@ async function initializeCluster() {
       );
     });
   }
+}
+
+// Función para intentar ejecutar una tarea varias veces en caso de error
+async function retryTask(
+  task: Function,
+  retries: number,
+  delay: number,
+): Promise<any> {
+  let lastError: any = null;
+
+  for (let attempt = 0; attempt < retries; attempt++) {
+    try {
+      return await task();
+    } catch (error) {
+      lastError = error;
+      console.error(`Intento ${attempt + 1} fallido:`, error);
+
+      // Espera antes de reintentar
+      if (attempt < retries - 1) {
+        await new Promise((res) => setTimeout(res, delay));
+      }
+    }
+  }
+
+  // Si fallan todos los intentos, lanzamos el último error
+  throw lastError;
 }
 
 async function scrape(req: Request, res: Response): Promise<Response> {
@@ -87,10 +110,31 @@ async function scrape(req: Request, res: Response): Promise<Response> {
   try {
     await initializeCluster();
 
-    const products = await cluster?.execute(
-      { url, username, password },
-      scrapeData,
-    );
+    // Ejecuta el scraper con manejo de reintentos
+    const products = await retryTask(
+      async () => {
+        return await cluster?.execute(
+          { url, username, password },
+          async ({ page, data }) => {
+            try {
+              await page.goto(data.url, {
+                waitUntil: 'domcontentloaded',
+                timeout: 60000,
+              });
+              await page.waitForSelector('selector', { timeout: 60000 }); // Espera un selector específico
+
+              // Aquí, agrega tu lógica de scraping
+              return scrapeData(data); // Si tu lógica de scraping es un servicio
+            } catch (err) {
+              console.error('Error durante la navegación o scraping:', err);
+              throw err; // Lanzar error para el reintento
+            }
+          },
+        );
+      },
+      3,
+      5000,
+    ); // Reintentos 3 veces, con 5 segundos de espera entre reintentos
 
     return res.json(products);
   } catch (error: unknown) {
