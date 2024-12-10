@@ -45,7 +45,7 @@ async function initializeCluster() {
     const executablePath = getExecutablePath();
     cluster = await Cluster.launch({
       concurrency: Cluster.CONCURRENCY_BROWSER,
-      maxConcurrency: 5, // Número máximo de navegadores concurrentes
+      maxConcurrency: 1, // Número máximo de navegadores concurrentes
       puppeteerOptions: {
         headless: true,
         args: [
