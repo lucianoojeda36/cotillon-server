@@ -43,9 +43,12 @@ function getExecutablePath(): string {
 async function initializeCluster() {
   if (!cluster) {
     const executablePath = getExecutablePath();
+    const cpuCount = os.cpus().length; // Detectar núcleos de CPU disponibles
+    const maxConcurrency = Math.min(cpuCount, 5); // Ajuste dinámico de concurrencia
+
     cluster = await Cluster.launch({
-      concurrency: Cluster.CONCURRENCY_BROWSER,
-      maxConcurrency: 1, // Número máximo de navegadores concurrentes
+      concurrency: Cluster.CONCURRENCY_PAGE, // Usa páginas en lugar de navegadores completos
+      maxConcurrency, // Número máximo de páginas concurrentes
       puppeteerOptions: {
         headless: true,
         args: [
@@ -53,13 +56,21 @@ async function initializeCluster() {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--disable-background-timer-throttling',
+          '--disable-renderer-backgrounding',
+          '--disable-accelerated-2d-canvas',
+          '--disable-blink-features=AutomationControlled',
         ],
         executablePath,
       },
+      timeout: 30000, // Tiempo máximo por tarea
     });
 
     cluster.on('taskerror', (err: unknown, data: unknown) => {
-      console.error(`Error en la tarea ${data}:`, err);
+      console.error(
+        `Error en la tarea con datos ${JSON.stringify(data)}:`,
+        err,
+      );
     });
   }
 }
