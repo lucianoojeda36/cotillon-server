@@ -63,7 +63,7 @@ async function initializeCluster() {
         ],
         executablePath,
       },
-      timeout: 30000, // Tiempo máximo por tarea
+      timeout: 60000, // Tiempo máximo por tarea
     });
 
     cluster.on('taskerror', (err: unknown, data: unknown) => {
