@@ -1,44 +1,52 @@
 import { Request, Response } from 'express';
-import puppeteer from 'puppeteer';
+import { Cluster } from 'puppeteer-cluster';
 import scrapeData from '../services/scraperService';
+
+let cluster: Cluster<any, any> | null = null;
+
+async function initializeCluster() {
+  if (!cluster) {
+    cluster = await Cluster.launch({
+      concurrency: Cluster.CONCURRENCY_BROWSER,
+      maxConcurrency: 5, // Número máximo de navegadores concurrentes
+      puppeteerOptions: {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+        ],
+        executablePath: '/usr/bin/google-chrome',
+      },
+    });
+
+    cluster.on('taskerror', (err: unknown, data: unknown) => {
+      console.error(`Error en la tarea ${data}:`, err);
+    });
+  }
+}
 
 async function scrape(req: Request, res: Response): Promise<Response> {
   const { url, username, password } = req.query;
 
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required' });
+  if (!url || !username || !password) {
+    return res
+      .status(400)
+      .json({ error: 'URL, username y password son requeridos.' });
   }
 
   try {
-    // Launch browser here instead of in the service
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
-      ],
-      executablePath: '/usr/bin/google-chrome',
-      defaultViewport: { width: 1920, height: 1080 },
-    });
+    await initializeCluster();
 
-    try {
-      const products = await scrapeData(
-        url as string,
-        username as string,
-        password as string,
-        browser, // Pass browser instance
-      );
+    const products = await cluster?.execute(
+      { url, username, password },
+      scrapeData,
+    );
 
-      return res.json(products);
-    } finally {
-      // Always close the browser
-      await browser.close();
-    }
+    return res.json(products);
   } catch (error: unknown) {
-    console.error('Error during scraping:', error);
+    console.error('Error durante el scraping:', error);
 
     if (error instanceof Error) {
       return res

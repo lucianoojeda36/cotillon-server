@@ -1,7 +1,19 @@
+import { Page } from 'puppeteer';
 import pool from '../config/database';
-import { Browser, Page } from 'puppeteer';
 
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const blockResources = async (page: Page) => {
+  await page.setRequestInterception(true);
+  page.on('request', (req) => {
+    const blockedResources = ['image', 'stylesheet', 'font', 'media'];
+    if (blockedResources.includes(req.resourceType())) {
+      req.abort();
+    } else {
+      req.continue();
+    }
+  });
+};
 
 const waitForSelectorWithRetry = async (
   page: Page,
@@ -23,15 +35,17 @@ const waitForSelectorWithRetry = async (
   }
 };
 
-const scrapeData = async (
-  url: string,
-  username: string,
-  password: string,
-  browser: Browser,
-) => {
-  const page: Page = await browser.newPage();
+const scrapeData = async ({
+  page,
+  data: { url, username, password },
+}: {
+  page: Page;
+  data: { url: string; username: string; password: string };
+}) => {
+  await blockResources(page); // Bloquear recursos innecesarios
+  await page.setViewport({ width: 1280, height: 800 });
+
   try {
-    await page.setViewport({ width: 1280, height: 800 });
     await page.goto(url, { waitUntil: 'domcontentloaded' });
 
     console.log('Ingresando credenciales...');
@@ -40,16 +54,16 @@ const scrapeData = async (
     await page.click('.button_login');
     await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
 
-    const searchTerm = '';
-    await page.type('#buscar_txt', searchTerm);
+    console.log('Realizando búsqueda...');
+    await page.type('#buscar_txt', ''); // Término de búsqueda vacío
     await page.click('#buscar_menu button[type="submit"]');
     await waitForSelectorWithRetry(page, '.producto_contenedor', {
       visible: true,
       timeout: 60000,
     });
 
-    let pageNumber = 1;
     let products: Array<any> = [];
+    let pageNumber = 1;
 
     while (true) {
       console.log(`Extrayendo datos - Página ${pageNumber}...`);
@@ -102,7 +116,7 @@ const scrapeData = async (
       pageNumber++;
     }
 
-    // Inserta los productos en la base de datos
+    console.log('Insertando datos en la base de datos...');
     for (const product of products) {
       if (!product.name || !product.price || !product.code) continue;
       await pool.query(
