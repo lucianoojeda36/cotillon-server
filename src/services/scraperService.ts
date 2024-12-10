@@ -23,13 +23,18 @@ const waitForSelectorWithRetry = async (
 ) => {
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
+      if (page.mainFrame().isDetached()) {
+        console.error('Frame principal desconectado, reintentando...');
+        throw new Error('Frame detached');
+      }
+
       await page.waitForSelector(selector, options);
       return; // Éxito, salir del bucle
-    } catch (err) {
-      if (attempt === retries) throw err; // Lanza el error si falla tras los reintentos
-      console.log(
-        `Reintento ${attempt}/${retries} para el selector ${selector}`,
-      );
+    } catch (error: any) {
+      console.error(`Error en intento ${attempt}:`, error.message);
+      if (attempt === retries) {
+        throw error;
+      }
       await delay(2000); // Pausa antes de reintentar
     }
   }
@@ -97,22 +102,31 @@ const scrapeData = async ({
       products = [...products, ...newProducts];
 
       // Validar si hay más páginas
-      const nextPageLink = await page.$(
-        `a.ir-pagina[href="javascript:lista_paginar_ir_pagina('${
-          pageNumber + 1
-        }');"]`,
-      );
+      const nextPageExists = await page.evaluate((pageNumber) => {
+        return !!document.querySelector(
+          `a.ir-pagina[href="javascript:lista_paginar_ir_pagina('${pageNumber}');"]`,
+        );
+      }, pageNumber + 1);
 
-      if (!nextPageLink) {
+      if (!nextPageExists) {
         console.log('No hay más páginas.');
         break;
       }
 
-      await nextPageLink.click();
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+        page.click(
+          `a.ir-pagina[href="javascript:lista_paginar_ir_pagina('${
+            pageNumber + 1
+          }');"]`,
+        ),
+      ]);
+
       await waitForSelectorWithRetry(page, '.producto_contenedor', {
         visible: true,
         timeout: 60000,
       });
+
       pageNumber++;
     }
 
@@ -130,6 +144,10 @@ const scrapeData = async ({
     return products;
   } catch (error) {
     console.error('Error durante el scraping:', error);
+
+    // Captura de pantalla para depurar
+    await page.screenshot({ path: `error_page_${Date.now()}.png` });
+
     throw error;
   } finally {
     await page.close(); // Asegura que la página se cierre
