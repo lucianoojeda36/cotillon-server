@@ -1,11 +1,9 @@
 import { Request, Response } from 'express';
-import scrapeData from '../services/scraperService'; // El servicio de scraping que usa Playwright
+import scrapeData from '../services/scraperService';
 
-// Eliminamos el uso de Cluster, ya que Playwright maneja la ejecución de múltiples pestañas y páginas de manera más sencilla
 async function scrape(req: Request, res: Response): Promise<Response> {
   const { url, username, password } = req.query;
 
-  // Verificar que los parámetros necesarios estén presentes
   if (!url || !username || !password) {
     return res
       .status(400)
@@ -13,7 +11,6 @@ async function scrape(req: Request, res: Response): Promise<Response> {
   }
 
   try {
-    // Llamada al servicio de scraping utilizando Playwright
     const products = await scrapeData({
       url: String(url),
       username: String(username),

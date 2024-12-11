@@ -6,7 +6,7 @@ import { Request, Response } from 'express';
 const secretKey = process.env.SECRET_KEY || 'cotillon';
 
 interface CustomRequest extends Request {
-  user?: any; // Cambia `any` por el tipo que necesites
+  user?: any;
 }
 
 export const registerUser = async (
@@ -119,26 +119,21 @@ export const getProfile = async (
   res: Response,
 ): Promise<void> => {
   try {
-    // Se recomienda usar un ID único o extraer información desde el JWT
-    const { id } = req.user; // Asumiendo que `req.user` contiene los datos del token JWT
+    const { id } = req.user;
 
-    // Consulta basada en ID único
     const userResult = await pool.query(
       'SELECT id, name, email, role FROM users WHERE id = $1',
       [id],
     );
 
-    // Verificar si el usuario existe
     if (userResult.rows.length === 0) {
       res.status(404).json({ message: 'Usuario no encontrado' });
       return;
     }
 
-    // Obtener los datos del usuario
     const user = userResult.rows[0];
 
-    // Enviar respuesta con los datos del usuario
-    res.status(200).json(user); // Aquí sí retornamos la respuesta al cliente
+    res.status(200).json(user);
     return;
   } catch (error) {
     console.error('Error al obtener el perfil:', error);

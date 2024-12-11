@@ -8,7 +8,6 @@ export const createOrder = async (
   try {
     const { user_id, total } = req.body;
 
-    // Verificar que los parámetros necesarios estén presentes
     if (!user_id || !total) {
       res
         .status(400)
@@ -16,14 +15,13 @@ export const createOrder = async (
       return;
     }
 
-    const status = 'pending'; // Estado inicial de la orden
+    const status = 'pending';
 
     const result = await pool.query(
       'INSERT INTO orders (user_id, status, total) VALUES ($1, $2, $3) RETURNING *',
       [user_id, status, total],
     );
 
-    // La orden se creó con éxito, respondemos con la orden creada
     const createdOrder = result.rows[0];
     res.status(201).json({
       message: 'Order created successfully',
@@ -52,14 +50,12 @@ export const verifyOrder = async (
       return;
     }
 
-    // Verificar alguna condición (como disponibilidad de productos o validez del pago)
     const order = result.rows[0];
     if (order.status !== 'pending') {
       res.status(400).json({ message: 'Order already processed' });
       return;
     }
 
-    // Si todo está bien
     res.status(200).json({ message: 'Order is valid for processing', order });
   } catch (error) {
     console.error('Error verifying order:', error);
@@ -74,8 +70,6 @@ export const processPayment = async (
   try {
     const { order_id, payment_details } = req.body;
 
-    // Lógica para procesar el pago (puede ser integración con un sistema de pagos)
-    // Aquí asumimos que el pago es exitoso
     const result = await pool.query(
       'UPDATE orders SET status = $1 WHERE order_id = $2 RETURNING *',
       ['paid', order_id],
@@ -198,7 +192,6 @@ export const refundOrder = async (
   try {
     const { order_id } = req.params;
 
-    // Aquí se asume que el reembolso fue exitoso (puedes integrar un sistema de pagos para verificar el estado real)
     const result = await pool.query(
       'UPDATE orders SET status = $1 WHERE order_id = $2 RETURNING *',
       ['refunded', order_id],

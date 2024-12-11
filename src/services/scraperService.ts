@@ -27,13 +27,13 @@ const waitForSelectorWithRetry = async (
   for (let attempt = 1; attempt <= retries; attempt++) {
     try {
       await page.waitForSelector(selector, options);
-      return; // Éxito, salir del bucle
+      return;
     } catch (error: any) {
       console.error(`Error en intento ${attempt}:`, error.message);
       if (attempt === retries) {
         throw error;
       }
-      await delay(2000); // Pausa antes de reintentar
+      await delay(2000);
     }
   }
 };
@@ -52,7 +52,7 @@ const scrapeData = async ({
   const page = await context.newPage();
 
   try {
-    await blockResources(page); // Bloquear recursos innecesarios
+    await blockResources(page);
     await page.setViewportSize({ width: 1280, height: 800 });
 
     console.log('Navegando a la página...');
@@ -68,7 +68,7 @@ const scrapeData = async ({
     });
 
     console.log('Realizando búsqueda...');
-    await page.fill('#buscar_txt', ''); // Término de búsqueda vacío
+    await page.fill('#buscar_txt', '');
     await page.click('#buscar_menu button[type="submit"]');
     await waitForSelectorWithRetry(page, '.producto_contenedor', {
       visible: true,
@@ -150,14 +150,14 @@ const scrapeData = async ({
         });
       } catch (error: any) {
         console.error(`Error al cambiar de página: ${error.message}`);
-        break; // Detener el scraping si ocurre un error crítico
+        break;
       }
 
       pageNumber++;
     }
 
     console.log('Insertando datos en la base de datos...');
-    const chunkSize = 100; // Insertar en lotes
+    const chunkSize = 100;
     for (let i = 0; i < products.length; i += chunkSize) {
       const productChunk = products.slice(i, i + chunkSize);
       const values = productChunk
@@ -183,14 +183,13 @@ const scrapeData = async ({
   } catch (error) {
     console.error('Error durante el scraping:', error);
 
-    // Captura de pantalla para depurar
     await page.screenshot({ path: `error_page_${Date.now()}.png` });
 
     throw error;
   } finally {
-    await page.close(); // Cerrar la página
-    await context.close(); // Cerrar el contexto
-    await browser.close(); // Asegura que el navegador se cierre
+    await page.close();
+    await context.close();
+    await browser.close();
   }
 };
 
