@@ -23,8 +23,7 @@
     "jsonwebtoken": "^9.0.2",
     "nodemon": "^3.1.7",
     "pg": "^8.13.1",
-    "puppeteer": "^23.10.1",
-    "puppeteer-cluster": "^0.24.0",
+    "playwright": "^1.49.1",
     "ts-node": "^10.9.2"
   },
   "devDependencies": {
