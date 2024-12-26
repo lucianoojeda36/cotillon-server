@@ -12,7 +12,7 @@ app.use(cors());
 
 app.use(express.json());
 
-console.log('----gola');
+console.log('----hgola');
 
 app.use('/api', scrapeRoutes);
 app.use('/api/users', usersRoutes);
