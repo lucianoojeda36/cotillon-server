@@ -12,6 +12,8 @@ app.use(cors());
 
 app.use(express.json());
 
+console.log('----gola');
+
 app.use('/api', scrapeRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/products', productsRoutes);
