@@ -11,5 +11,13 @@ module.exports = {
         NODE_ENV: 'production',
       },
     },
+    {
+      name: 'update-database-job',
+      script: './dist/services/updateDatabase.js',
+      interpreter: 'node',
+      env: {
+        NODE_ENV: 'production',
+      },
+    },
   ],
 };

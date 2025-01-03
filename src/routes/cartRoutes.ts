@@ -8,9 +8,9 @@ import {
 
 const router = Router();
 
-router.post('/cart', addOrUpdateCart);
-router.get('/cart/:user_id', getUserCart);
-router.delete('/cart', removeFromCart);
-router.delete('/cart/clear', clearCart);
+router.post('/', addOrUpdateCart);
+router.get('/:user_id', getUserCart);
+router.delete('/delete', removeFromCart);
+router.delete('/clear', clearCart);
 
 export default router;

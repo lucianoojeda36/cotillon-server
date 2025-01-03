@@ -14,21 +14,43 @@ export const registerUser = async (
   res: Response,
 ): Promise<void> => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, rememberMe = false } = req.body;
+
+    if (!name || !email || !password) {
+      res.status(400).json({
+        error: 'Todos los campos obligatorios deben ser completados.',
+      });
+      return;
+    }
+
+    const verifyUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email],
+    );
+    if (verifyUser.rows.length > 0) {
+      res
+        .status(400)
+        .json({ error: 'El correo electrónico ya está registrado.' });
+      return;
+    }
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
     const newUser = await pool.query(
-      'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, hashedPassword],
+      'INSERT INTO users (name, email, password, rememberMe) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, email, hashedPassword, rememberMe],
     );
 
-    res
-      .status(201)
-      .json({ message: 'Usuario registrado', user: newUser.rows[0] });
+    res.status(201).json({
+      message: 'Usuario registrado con éxito.',
+      user: newUser.rows[0],
+    });
     return;
-  } catch (error) {
-    console.error(error);
-    res.status(500).send('Error to register user');
+  } catch (error: any) {
+    console.error('Error al registrar el usuario:', error.message);
+    res.status(500).json({
+      error: 'Ocurrió un error al registrar el usuario. Intente nuevamente.',
+    });
     return;
   }
 };
@@ -49,7 +71,12 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const payload = { id: user.id, email: user.email };
+    const payload = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
     const token = jwt.sign(payload, secretKey, { expiresIn: '1h' });
     const refreshToken = jwt.sign(payload, secretKey, { expiresIn: '7d' });
 
@@ -58,7 +85,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       user.id,
     ]);
 
-    res.json({ token, refreshToken });
+    res.json({ ...payload, token, refreshToken });
     return;
   } catch (error) {
     console.log(error);
